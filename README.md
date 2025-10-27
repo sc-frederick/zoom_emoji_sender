@@ -7,7 +7,9 @@ A Python script that allows you to send multiple emoji reactions to Zoom Team Ch
 - List recent chat messages from all your chats
 - Browse messages from specific channels
 - Send mass emoji reactions to any message
-- Choose from 70+ popular emojis or provide custom ones
+- Choose from 2400+ Zoom-supported emojis loaded from external file
+- Random emoji selection with customizable count
+- Custom emoji input support
 - Rate limiting protection with configurable delays
 
 ## Setup
@@ -91,7 +93,8 @@ The script will guide you through:
    - Browse a specific channel
    - Enter a message ID directly
 3. **Emoji Selection**: Choose emojis to send:
-   - Use all 70+ popular emojis
+   - Use all supported emojis (2400+ from `zoom_supported_emojis.txt`)
+   - Random selection (specify how many random emojis)
    - Enter custom emojis (space-separated)
 4. **Confirmation**: Review and confirm before sending
 
@@ -132,28 +135,34 @@ RECENT MESSAGES
 
 Enter the message number to spam with emojis: 1
 
+Loaded 2448 unique emojis from zoom_supported_emojis.txt
+
 Emoji options:
-1. Use all popular emojis (70+ emojis)
-2. Select custom emojis
+1. Use all supported emojis (2448 emojis)
+2. Random selection (specify count)
+3. Enter custom emojis
 
-Enter choice (1/2): 1
+Enter choice (1/2/3): 2
 
-Using 70 popular emojis!
+How many random emojis? (1-2448): 50
 
-About to send 70 emoji reactions to message ID: msg_abc123
-Sample emojis: 😀 😃 😄 😁 😆 😅 🤣 😂 🙂 🙃
+Randomly selected 50 emojis!
+Sample: 🌀 🎨 🐻 💡 🚀 🎉 ⭐ 🔥 💯 🎯 ❤️ 🌈 🎵 🍕 🏆 🌺 🦋 ⚡ 🎭 🌟
+
+About to send 50 emoji reactions to message ID: msg_abc123
+Sample emojis: 🌀 🎨 🐻 💡 🚀 🎉 ⭐ 🔥 💯 🎯
 
 Proceed? (yes/no): yes
 
-Sending 70 emoji reactions...
+Sending 50 emoji reactions...
 --------------------------------------------------------------------------------
-✓ Added 😀
-✓ Added 😃
-✓ Added 😄
+✓ Added 🌀
+✓ Added 🎨
+✓ Added 🐻
 ...
 --------------------------------------------------------------------------------
 
-✓ Successfully sent 70/70 emoji reactions!
+✓ Successfully sent 50/50 emoji reactions!
 ```
 
 ## API Endpoints Used
@@ -167,12 +176,27 @@ The script uses the following Zoom API endpoints:
 
 ## Rate Limiting
 
-The script includes a configurable delay (default 0.5 seconds) between emoji reactions to avoid hitting Zoom's API rate limits. Zoom API rate limits vary by endpoint:
-- Heavy endpoints: 1 request/second
-- Medium endpoints: 10 requests/second
-- Light endpoints: 100 requests/second
+The script includes a configurable delay (default 1.0 seconds) between emoji reactions to avoid hitting Zoom's API rate limits. Zoom API rate limits vary by account type and endpoint tier:
 
-The emoji reaction endpoint is typically classified as "Medium" tier, so the default 0.5s delay is conservative and safe. You can adjust this in the `spam_emojis()` method if needed, but be aware of rate limiting consequences.
+| Rate Limit Type | Free | Pro | Business+ |
+|----------------|------|-----|-----------|
+| Light APIs | 4/second, 6000/day | 30/second | 80/second |
+| Medium APIs | 2/second, 2000/day | 20/second | 60/second |
+| Heavy APIs | 1/second, 1000/day | 10/second* | 40/second* |
+| Resource-intensive APIs | 10/minute, 30,000/day | 10/minute* | 20/minute* |
+
+The emoji reaction endpoint is classified as **Medium** tier. The default 1.0s delay (1 req/sec) is safe for Free accounts and conservative for Pro/Business+ accounts. 
+
+**For Free accounts:**
+- Maximum 2000 reactions per day
+- Recommended delay: 1.0s (stays under 2/second limit)
+
+**For Pro/Business+ accounts:**
+- You can reduce the delay for faster sending
+- Pro: Up to 20 reactions/second (0.05s delay)
+- Business+: Up to 60 reactions/second (0.017s delay)
+
+You can adjust the delay in the `spam_emojis()` method, but be aware of rate limiting consequences for your account tier.
 
 ## Features & Enhancements
 

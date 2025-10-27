@@ -386,8 +386,54 @@ def display_messages(messages: List[Dict]) -> None:
     print("\n" + "="*80)
 
 
+def load_zoom_emojis(file_path: str = "zoom_supported_emojis.txt") -> List[str]:
+    """
+    Load and parse emojis from the zoom_supported_emojis.txt file
+    
+    Args:
+        file_path: Path to the emoji file (relative to script location)
+        
+    Returns:
+        List of emoji strings
+    """
+    script_dir = Path(__file__).parent
+    emoji_file = script_dir / file_path
+    
+    if not emoji_file.exists():
+        print(f"Warning: {file_path} not found, using fallback emoji list")
+        return get_popular_emojis()
+    
+    try:
+        with open(emoji_file, 'r', encoding='utf-8') as f:
+            content = f.read()
+        
+        # Extract all emojis from the file
+        # Split by spaces and filter out empty strings
+        emojis = []
+        for char in content:
+            # Check if character is an emoji (basic check for non-ASCII printable)
+            if ord(char) > 127 and char not in ['\n', '\r', '\t', ' ']:
+                emojis.append(char)
+        
+        # Remove duplicates while preserving order
+        seen = set()
+        unique_emojis = []
+        for emoji in emojis:
+            if emoji not in seen:
+                seen.add(emoji)
+                unique_emojis.append(emoji)
+        
+        print(f"Loaded {len(unique_emojis)} unique emojis from {file_path}")
+        return unique_emojis
+    
+    except Exception as e:
+        print(f"Error loading emoji file: {e}")
+        print("Using fallback emoji list")
+        return get_popular_emojis()
+
+
 def get_popular_emojis() -> List[str]:
-    """Return a comprehensive list of popular emojis"""
+    """Return a comprehensive list of popular emojis (fallback)"""
     return [
         # Smileys & Emotion
         "😀", "😃", "😄", "😁", "😆", "😅", "🤣", "😂",
@@ -635,22 +681,36 @@ def main():
             print("Error: No message ID provided!")
             return
         
+        # Load emojis from file
+        all_emojis = load_zoom_emojis()
+        
         # Select emojis
         print("\nEmoji options:")
-        print("1. Use all popular emojis (400+ emojis)")
-        print("2. Random selection (15 emojis)")
-        print("3. Select custom emojis")
+        print(f"1. Use all supported emojis ({len(all_emojis)} emojis)")
+        print("2. Random selection (specify count)")
+        print("3. Enter custom emojis")
         emoji_choice = input("\nEnter choice (1/2/3): ").strip()
         
         emojis = []
         
         if emoji_choice == "1":
-            emojis = get_popular_emojis()
-            print(f"\nUsing {len(emojis)} popular emojis!")
+            emojis = all_emojis
+            print(f"\nUsing all {len(emojis)} supported emojis!")
         elif emoji_choice == "2":
-            all_emojis = get_popular_emojis()
-            emojis = random.sample(all_emojis, min(15, len(all_emojis)))
-            print(f"\nRandomly selected 15 emojis: {' '.join(emojis)}")
+            # Ask user for number of random emojis
+            while True:
+                count_input = input(f"\nHow many random emojis? (1-{len(all_emojis)}): ").strip()
+                try:
+                    count = int(count_input)
+                    if 1 <= count <= len(all_emojis):
+                        emojis = random.sample(all_emojis, count)
+                        print(f"\nRandomly selected {count} emojis!")
+                        print(f"Sample: {' '.join(emojis[:20])}" + (" ..." if len(emojis) > 20 else ""))
+                        break
+                    else:
+                        print(f"Please enter a number between 1 and {len(all_emojis)}")
+                except ValueError:
+                    print("Invalid input. Please enter a number.")
         elif emoji_choice == "3":
             print("\nEnter emojis separated by spaces (e.g., 😀 😃 😄 👍 ❤️):")
             emoji_input = input("> ").strip()
